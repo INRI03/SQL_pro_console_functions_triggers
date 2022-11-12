@@ -1,11 +1,49 @@
-Задание 1. World-db.
-В командной строке используя pg_restore.exe восстановите бэкап
-базы world-db
-Выполните запрос select * from country
+-- Задание 2
 
-Задание 2. Dvd-rental.
-Напишите функцию, которая будет в виде аргументов принимать две даты и в качестве результата возвращать сумму продаж между этими датами, включая эти даты.
+create or replace function foo1(date_one date, date_two date, out sum_payment numeric) as $$
+  begin 
+	 if date_one is null or date_two is null
+	   then raise exception 'Укажите обе даты';
+	 elseif date_one > date_two
+	   then raise exception 'Дата окончания должна быть больше';
+	  elseif date_one = date_two
+	   then raise exception 'Даты должны отличаться';
+	 elseif date_one > (select max(payment_date) from payment)
+	   then raise exception 'Дата начала вне диапазона базы';
+	 elseif date_two < (select min(payment_date) from payment)
+	   then raise exception 'Дата окончания вне диапазона базы';
+	 else 
+			select sum(amount)
+			from payment p
+			where payment_date::date between date_one and date_two into sum_payment;
+	end if;
+  end;
+$$
+language plpgsql
 
-Задание 3. Dvd-rental.
-Создайте таблицу not_active_customer со столбцами id, customer_id и not_active_date (дата создания записи)
-Напишите триггерную функцию, которая будет срабатывать при изменении данных в таблице customer, если пользователь становится неактивным, то в таблицу not_active_customer должна добавиться запись об этом пользователе
+select foo1('2005-08-22', '2005-12-10')
+
+
+-- Задание 3
+
+create table not_active_customer (
+	id serial,
+	customer_id int,
+	not_active_date timestamp default now()
+	)
+	
+	create trigger n_a
+	after update on customer
+	for each row
+	when (new.active = '0')
+	execute function foo2()
+	
+	
+	create or replace function foo2() returns trigger as $$
+	begin 
+		if TG_OP = 'UPDATE'
+		then insert into not_active_customer(customer_id) values (new.customer_id);
+	end if;
+    return new;
+	end; $$
+	language plpgsql
