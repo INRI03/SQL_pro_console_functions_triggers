@@ -1,5 +1,5 @@
 -- Задание 2
-
+```sql
 create or replace function foo1(date_one date, date_two date, out sum_payment numeric) as $$
   begin 
 	 if date_one is null or date_two is null
@@ -22,10 +22,10 @@ $$
 language plpgsql
 
 select foo1('2005-08-22', '2005-12-10')
-
+```
 
 -- Задание 3
-
+```sql
 create table not_active_customer (
 	id serial,
 	customer_id int,
@@ -47,3 +47,4 @@ create table not_active_customer (
     return new;
 	end; $$
 	language plpgsql
+```
